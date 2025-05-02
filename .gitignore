@@ -1,0 +1,68 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+ENV/
+
+# PyTorch/ML
+*.pt
+*.pth
+*.onnx
+*.engine
+.ipynb_checkpoints/
+runs/
+weights/
+
+# Data files
+*.mp4
+*.avi
+*.jpg
+*.jpeg
+*.png
+*.bmp
+*.tif
+*.tiff
+dataset/
+data/
+images/
+videos/
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Project specific
+*.log
+output/
+results/ 

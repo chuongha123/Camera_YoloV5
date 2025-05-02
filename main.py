@@ -16,7 +16,8 @@ if torch.cuda.is_available():
 vehicle_classes = ['car', 'motorbike', 'bus', 'truck']
 
 # Kết nối camera (0 = webcam; hoặc ESP32-CAM IP)
-cap = cv2.VideoCapture('http://192.168.1.61:80/stream')
+# cap = cv2.VideoCapture('http://192.168.1.61:80/stream')
+cap = cv2.VideoCapture(0)
 
 if not cap.isOpened():
     print("Failed to connect to camera.")
