@@ -5,7 +5,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 import torch
 import cv2
 import threading
-from flask import Flask, Response, jsonify
+from flask import Flask, Response, jsonify, render_template
 import time
 
 # Flask app setup
@@ -98,11 +98,18 @@ def video_feed():
 
 @app.route('/')
 def index():
-    """Trang chủ với thông tin API"""
+    """Trang chủ hiển thị camera fullscreen"""
+    return render_template('index.html')
+
+
+@app.route('/api/info')
+def api_info():
+    """API thông tin dạng JSON"""
     return jsonify({
         "status": "running",
         "endpoints": {
-            "video_feed": "/video_feed"
+            "video_feed": "/video_feed",
+            "info": "/api/info"
         }
     })
 

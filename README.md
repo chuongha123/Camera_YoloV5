@@ -29,10 +29,18 @@ Hệ thống phát hiện xe (car, motorbike, bus, truck) và người (person) 
    ```
 
 2. Server sẽ khởi động tại địa chỉ http://0.0.0.0:5000
-   - Kiểm tra thông tin server tại: http://localhost:5000
-   - Stream phát hiện có tại: http://localhost:5000/video_feed
+   - Giao diện web fullscreen: http://localhost:5000
+   - API thông tin: http://localhost:5000/api/info
+   - Stream phát hiện trực tiếp: http://localhost:5000/video_feed
 
 ## Kết nối từ thiết bị di động
+
+### Giao diện web
+Truy cập địa chỉ IP của máy tính từ trình duyệt điện thoại:
+```
+http://YOUR_PC_IP:5000
+```
+Giao diện web đã được tối ưu cho thiết bị di động, camera sẽ hiển thị toàn màn hình.
 
 ### Cấu hình camera
 - Đổi camera (trong file main.py):
@@ -79,6 +87,20 @@ Hệ thống phát hiện xe (car, motorbike, bus, truck) và người (person) 
        flex: 1,
      },
    });
+   ```
+
+   Hoặc sử dụng giao diện web có sẵn:
+   ```javascript
+   const webUrl = 'http://YOUR_PC_IP:5000';
+   
+   return (
+     <View style={styles.container}>
+       <WebView 
+         source={{ uri: webUrl }}
+         style={styles.webview}
+       />
+     </View>
+   );
    ```
 
 ## Xử lý sự cố
