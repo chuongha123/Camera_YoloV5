@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>YOLOv5 Vehicle Detection</title>
+    <title>Hệ thống Giám sát Bãi đỗ xe</title>
     <style>
       * {
         margin: 0;
@@ -15,23 +15,119 @@
       html {
         width: 100%;
         height: 100%;
-        overflow: hidden;
-        background-color: #000;
+        background-color: #1a1a1a;
         font-family: Arial, sans-serif;
+        color: white;
       }
 
-      .video-feed {
-        width: 100vw;
-        height: 100vh;
+      .header {
+        padding: 15px;
+        text-align: center;
+        background-color: #222;
+        border-bottom: 1px solid #444;
+      }
+
+      .cameras-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        padding: 20px;
+        gap: 20px;
+        height: calc(100vh - 100px);
+      }
+
+      .camera-card {
+        flex: 1;
+        min-width: 320px;
+        max-width: 800px;
+        background-color: #222;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        display: flex;
+        flex-direction: column;
+      }
+
+      .camera-header {
+        padding: 10px 15px;
+        background-color: #333;
+        font-weight: bold;
+        font-size: 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .camera-feed {
+        width: 100%;
+        height: 100%;
         object-fit: contain;
+        background-color: #000;
+      }
+
+      .footer {
+        padding: 10px;
+        text-align: center;
+        background-color: #222;
+        font-size: 12px;
+        color: #999;
+        border-top: 1px solid #444;
+      }
+
+      /* Responsive design */
+      @media (max-width: 768px) {
+        .cameras-container {
+          flex-direction: column;
+          height: auto;
+        }
+
+        .camera-card {
+          height: 400px;
+        }
       }
     </style>
   </head>
   <body>
-    <img
-      src="{{ url_for('video_feed') }}"
-      class="video-feed"
-      alt="Vehicle Detection Stream"
-    />
+    <div class="header">
+      <h1>Hệ thống Giám sát Bãi đỗ xe</h1>
+    </div>
+
+    <div class="cameras-container">
+      {% for camera_id, config in cameras.items() %}
+      <div class="camera-card">
+        <div class="camera-header">
+          <span>{{ config.name }}</span>
+          <span id="status-{{ camera_id }}">✓ Online</span>
+        </div>
+        <img 
+          src="{{ url_for('video_feed', camera_id=camera_id) }}"
+          class="camera-feed"
+          alt="{{ config.name }} Stream"
+          onerror="document.getElementById('status-{{ camera_id }}').innerHTML = '✕ Offline'; this.src='/static/offline.png';"
+        />
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="footer">
+      <p>Hệ thống phát hiện: xe hơi, xe máy, xe buýt, xe tải, người | YOLOv5</p>
+    </div>
+
+    <script>
+      // Theo dõi trạng thái kết nối của các camera
+      document.addEventListener('DOMContentLoaded', function() {
+        // Kiểm tra kết nối camera mỗi 5 giây
+        setInterval(function() {
+          fetch('/api/info')
+            .then(response => response.json())
+            .then(data => {
+              console.log('Server status:', data.status);
+            })
+            .catch(error => {
+              console.error('Error checking server status:', error);
+            });
+        }, 5000);
+      });
+    </script>
   </body>
 </html>
