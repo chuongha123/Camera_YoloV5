@@ -32,6 +32,14 @@ CAMERAS = {
         "last_update_time": 0,
         "frame_queue": Queue(maxsize=10)  # Separate queue for bai2
     },
+    "bai3": {
+        "name": "Bãi 3",
+        "url": 0,  # First webcam
+        "output_frame": None,
+        "last_results": None,
+        "last_update_time": 0,
+        "frame_queue": Queue(maxsize=10)  # Separate queue for bai1
+    },
 }
 
 # Load YOLOv5 pretrained model (sử dụng YOLOv5n với input size nhỏ hơn)
@@ -97,7 +105,7 @@ def process_frames(camera_id):
     """Hàm xử lý frame từ queue của camera với YOLOv5"""
     camera_config = CAMERAS[camera_id]
     frame_count = 0
-    skip_frames = 30
+    skip_frames = 15
     hold_time = 1.0
 
     while True:
@@ -121,7 +129,7 @@ def process_frames(camera_id):
                 print(f"YOLO processing error for {camera_id}: {e}")
                 continue
 
-        # Vẽ bounding box từ kết quả gần nhất
+        # Draw the bounding boxes from the latest result
         with lock:
             if (camera_config["last_results"] is not None and
                     current_time - camera_config["last_update_time"] <= hold_time):
@@ -148,7 +156,7 @@ def process_frames(camera_id):
 
 
 def gen_camera_stream(camera_id):
-    """Stream video từ output_frame của camera"""
+    """Stream video from output_frame of the camera"""
     camera_config = CAMERAS[camera_id]
 
     while True:
