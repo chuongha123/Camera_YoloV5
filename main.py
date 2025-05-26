@@ -45,10 +45,13 @@ vehicle_classes = ['car', 'motorbike', 'bus', 'truck', 'person']
 
 # Hàm tiền xử lý frame để đảm bảo kích thước phù hợp
 def preprocess_frame(frame, target_size=(640, 640)):
-    # Resize frame về kích thước target_size, giữ tỷ lệ
-    h, w = frame.shape[:2]
-    scale = min(target_size[0] / w, target_size[1] / h)
-    new_w, new_h = int(w * scale), int(h * scale)
+    # Lưu kích thước gốc
+    orig_h, orig_w = frame.shape[:2]
+    # Tính tỷ lệ giữ aspect ratio
+    scale = min(target_size[0] / orig_w, target_size[1] / orig_h)
+    new_w, new_h = int(orig_w * scale), int(orig_h * scale)
+
+    # Resize frame
     resized_frame = cv2.resize(frame, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
 
     # Tạo canvas vuông và đặt frame vào giữa
@@ -57,7 +60,7 @@ def preprocess_frame(frame, target_size=(640, 640)):
     y_offset = (target_size[1] - new_h) // 2
     canvas[y_offset:y_offset + new_h, x_offset:x_offset + new_w] = resized_frame
 
-    return canvas, (x_offset, y_offset, scale)
+    return canvas, (x_offset, y_offset, scale, orig_w, orig_h)
 
 
 def detect_vehicles(camera_id):
@@ -70,12 +73,17 @@ def detect_vehicles(camera_id):
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
+    # Kiểm tra kích thước frame thực tế
+    actual_width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+    actual_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    print(f"Camera {camera_id} resolution: {actual_width}x{actual_height}")
+
     if not cap.isOpened():
         print(f"Failed to connect to camera {camera_id}.")
         return
 
     frame_count = 0
-    skip_frames = 10  # Chỉ chạy YOLO mỗi 10 frame
+    skip_frames = 10  # Chỉ chạy YOLO mỗi 5 frame
     hold_time = 1.0  # Giữ bounding box trong 1 giây
 
     while True:
@@ -85,8 +93,8 @@ def detect_vehicles(camera_id):
             time.sleep(1)  # Wait before retry
             continue
 
-        # Tiền xử lý frame để đảm bảo kích thước phù hợp
-        processed_frame, (x_offset, y_offset, scale) = preprocess_frame(frame, target_size=(640, 640))
+        # Tiền xử lý frame
+        processed_frame, (x_offset, y_offset, scale, orig_w, orig_h) = preprocess_frame(frame, target_size=(640, 640))
 
         current_time = time.time()
 
@@ -111,10 +119,15 @@ def detect_vehicles(camera_id):
                     label = model.names[int(cls)]
                     if label in vehicle_classes:
                         # Điều chỉnh tọa độ từ frame đã xử lý về frame gốc
-                        x1 = int(xyxy[0] * frame.shape[1] / processed_frame.shape[1])
-                        y1 = int(xyxy[1] * frame.shape[0] / processed_frame.shape[0])
-                        x2 = int(xyxy[2] * frame.shape[1] / processed_frame.shape[1])
-                        y2 = int(xyxy[3] * frame.shape[0] / processed_frame.shape[0])
+                        x1 = int((xyxy[0] - x_offset) / scale)
+                        y1 = int((xyxy[1] - y_offset) / scale)
+                        x2 = int((xyxy[2] - x_offset) / scale)
+                        y2 = int((xyxy[3] - y_offset) / scale)
+                        # Đảm bảo tọa độ nằm trong khung hình gốc
+                        x1 = max(0, min(x1, orig_w - 1))
+                        y1 = max(0, min(y1, orig_h - 1))
+                        x2 = max(0, min(x2, orig_w - 1))
+                        y2 = max(0, min(y2, orig_h - 1))
                         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                         cv2.putText(frame, f'{label} {conf:.2f}', (x1, y1 - 10),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
