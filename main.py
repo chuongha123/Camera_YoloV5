@@ -37,7 +37,7 @@ CAMERAS = {
 # Load YOLOv5 pretrained model (sử dụng YOLOv5n với input size nhỏ hơn)
 model = torch.hub.load('ultralytics/yolov5', 'yolov5n', pretrained=True)
 model.conf = 0.4  # Chỉ nhận >=40% độ tin cậy
-model.imgsz = 416  # Giảm kích thước input xuống 416x416
+model.imgsz = 416  # Reduce the input size to 416x416
 
 # Nếu có GPU thì chạy trên GPU
 if torch.cuda.is_available():
@@ -140,7 +140,7 @@ def process_frames(camera_id):
                         cv2.putText(frame, f'{label} {conf:.2f}', (x1, y1 - 10),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
 
-        # Cập nhật output_frame
+        # Update the output_frame
         with lock:
             camera_config["output_frame"] = frame.copy()
 
@@ -209,6 +209,6 @@ if __name__ == '__main__':
         t_process.daemon = True
         t_process.start()
 
-    # Khởi động Flask server
+    # Restart the Flask server
     print("Starting server at http://0.0.0.0:5001")
     app.run(host='0.0.0.0', port=5001, threaded=True)
