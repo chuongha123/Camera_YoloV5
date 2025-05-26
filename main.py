@@ -31,19 +31,11 @@ CAMERAS = {
         "last_results": None,
         "last_update_time": 0,
         "frame_queue": Queue(maxsize=10)  # Separate queue for bai2
-    },
-    "bai3": {
-        "name": "Bãi 3",
-        "url": 0,  # Third webcam
-        "output_frame": None,
-        "last_results": None,
-        "last_update_time": 0,
-        "frame_queue": Queue(maxsize=10)  # Separate queue for bai3
-    },
+    }
 }
 
 # Load YOLOv5 pretrained model (sử dụng YOLOv5n với input size nhỏ hơn)
-model = torch.hub.load('ultralytics/yolov5', 'yolov5n', pretrained=True)
+model = torch.hub.load('ultralytics/yolov5', 'custom', path='yolov5/runs/train/exp5/weights/best.pt', force_reload=True)
 model.conf = 0.4  # Chỉ nhận >=40% độ tin cậy
 model.imgsz = 416  # Reduce the input size to 416x416
 
@@ -52,7 +44,8 @@ if torch.cuda.is_available():
     model.to('cuda')
 
 # Chỉ lấy các class xe
-vehicle_classes = ['car', 'motorbike', 'bus', 'truck', 'person']
+vehicle_classes = ['car', 'cars', 'motorbike', 'bus', 'truck', 'person']
+print(model.names)
 
 
 # Hàm tiền xử lý frame

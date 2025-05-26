@@ -66,3 +66,4 @@ Desktop.ini
 *.log
 output/
 results/ 
+yolov5/
