@@ -34,11 +34,11 @@ CAMERAS = {
     },
     "bai3": {
         "name": "Bãi 3",
-        "url": 0,  # First webcam
+        "url": 0,  # Third webcam
         "output_frame": None,
         "last_results": None,
         "last_update_time": 0,
-        "frame_queue": Queue(maxsize=10)  # Separate queue for bai1
+        "frame_queue": Queue(maxsize=10)  # Separate queue for bai3
     },
 }
 
