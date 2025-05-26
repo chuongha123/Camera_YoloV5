@@ -34,6 +34,7 @@ CAMERAS = {
 # Load YOLOv5 pretrained model (sử dụng YOLOv5n để nhẹ hơn)
 model = torch.hub.load('ultralytics/yolov5', 'yolov5n', pretrained=True)
 model.conf = 0.4  # chỉ nhận >=40% độ tin cậy
+model.imgsz = 416 # Reduce the input size to 416x416
 
 # Nếu có GPU thì chạy trên GPU
 if torch.cuda.is_available():
@@ -63,23 +64,23 @@ def preprocess_frame(frame, target_size=(640, 640)):
     return canvas, (x_offset, y_offset, scale, orig_w, orig_h)
 
 
-def detect_vehicles(camera_id):
-    camera_config = CAMERAS[camera_id]
+def detect_vehicles(camera):
+    camera_config = CAMERAS[camera]
 
     # Kết nối camera
     cap = cv2.VideoCapture(camera_config["url"])
 
     # Giảm độ phân giải để tăng tốc
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 480)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
     # Kiểm tra kích thước frame thực tế
     actual_width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
     actual_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
-    print(f"Camera {camera_id} resolution: {actual_width}x{actual_height}")
+    print(f"Camera {camera} resolution: {actual_width}x{actual_height}")
 
     if not cap.isOpened():
-        print(f"Failed to connect to camera {camera_id}.")
+        print(f"Failed to connect to camera {camera}.")
         return
 
     frame_count = 0
@@ -89,7 +90,7 @@ def detect_vehicles(camera_id):
     while True:
         ret, frame = cap.read()
         if not ret:
-            print(f"Failed to grab frame from camera {camera_id}.")
+            print(f"Failed to grab frame from camera {camera}.")
             time.sleep(1)  # Wait before retry
             continue
 
