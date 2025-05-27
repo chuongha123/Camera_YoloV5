@@ -41,7 +41,7 @@ if torch.cuda.is_available():
     model.to('cuda')
 
 # Chỉ lấy các class xe
-vehicle_classes = ['car', 'motorbike', 'bus', 'truck', 'person']
+vehicle_classes = ['car', 'cartoon_car', 'motorbike', 'bus', 'truck', 'person']
 
 
 # Hàm tiền xử lý frame để đảm bảo kích thước phù hợp
