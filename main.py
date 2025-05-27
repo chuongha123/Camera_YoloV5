@@ -32,7 +32,7 @@ CAMERAS = {
 }
 
 # Load YOLOv5 pretrained model (sử dụng YOLOv5n để nhẹ hơn)
-model = torch.hub.load('ultralytics/yolov5', 'custom', path='best2.pt', force_reload=True)
+model = torch.hub.load('ultralytics/yolov5', 'custom', path='best.pt', force_reload=True)
 model.conf = 0.4  # chỉ nhận >=40% độ tin cậy
 model.imgsz = 416 # Reduce the input size to 416x416
 
@@ -41,7 +41,7 @@ if torch.cuda.is_available():
     model.to('cuda')
 
 # Chỉ lấy các class xe
-vehicle_classes = ['car', 'cartoon_car', 'motorbike', 'bus', 'truck', 'person']
+vehicle_classes = ['car', 'cars', 'cartoon_car', 'motorbike', 'bus', 'truck', 'person']
 
 
 # Hàm tiền xử lý frame để đảm bảo kích thước phù hợp

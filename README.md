@@ -159,3 +159,7 @@ Giao diện web sẽ hiển thị tất cả các camera được cấu hình, m
    - Tăng `DETECTION_INTERVAL` lên cao hơn để giảm tần suất phát hiện
    - Tăng `STREAM_DELAY` để giảm tần suất frame
    - Nếu có GPU, đảm bảo model được chạy trên GPU
+
+
+
+!python train.py --img 640 --batch 16 --epochs 50 --data "/content/drive/MyDrive/baidoxe/custom_train/data.yaml" --weights yolov5s.pt --name model_with_new_car --freeze 24 --hyp /content/drive/MyDrive/baidoxe/hyp-custom.yaml
