@@ -1,7 +1,7 @@
 import os
 import glob
 
-def convert_labels(input_dir):
+def convert_labels(input_dir, source_index = '0', target_index = '2'):
     # Tìm tất cả các file .txt trong thư mục
     label_files = glob.glob(os.path.join(input_dir, "*.txt"))
     
@@ -13,8 +13,8 @@ def convert_labels(input_dir):
         new_lines = []
         for line in lines:
             parts = line.strip().split()
-            if parts[0] == '0':  # Nếu class index là 0
-                parts[0] = '80'  # Đổi thành 80
+            if parts[0] == source_index:  # Nếu class index là 0
+                parts[0] = target_index  # Đổi thành 80
             new_lines.append(' '.join(parts) + '\n')
         
         # Ghi lại file
@@ -24,12 +24,12 @@ def convert_labels(input_dir):
 
 # Chuyển đổi labels trong các thư mục train, valid và test
 print("Đang chuyển đổi labels trong thư mục train...")
-convert_labels('custom_train/train/labels')
+convert_labels('car_train/train/labels', '0', '2')
 
 print("Đang chuyển đổi labels trong thư mục valid...")
-convert_labels('custom_train/valid/labels')
+convert_labels('car_train/valid/labels', '0', '2')
 
 print("Đang chuyển đổi labels trong thư mục test...")
-convert_labels('custom_train/test/labels')
+convert_labels('car_train/test/labels', '0', '2')
 
 print("Đã chuyển đổi xong tất cả các file label!") 

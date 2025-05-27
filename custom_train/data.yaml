@@ -1,6 +1,6 @@
-train: /content/drive/MyDrive/baidoxe/custom_train/train/images
-val: /content/drive/MyDrive/baidoxe/custom_train/valid/images
-test: /content/drive/MyDrive/baidoxe/custom_train/test/images
+train: ../car_train/train/images
+val: ../car_train/valid/images
+test: ../car_train/test/images
 
 nc: 81
 names: [
