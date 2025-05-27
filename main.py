@@ -32,7 +32,7 @@ CAMERAS = {
 }
 
 # Load YOLOv5 pretrained model (sử dụng YOLOv5n để nhẹ hơn)
-model = torch.hub.load('ultralytics/yolov5', 'yolov5n', pretrained=True)
+model = torch.hub.load('ultralytics/yolov5', 'custom', path='best2.pt', force_reload=True)
 model.conf = 0.4  # chỉ nhận >=40% độ tin cậy
 model.imgsz = 416 # Reduce the input size to 416x416
 
