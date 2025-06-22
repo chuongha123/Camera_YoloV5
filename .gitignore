@@ -67,3 +67,5 @@ Desktop.ini
 output/
 results/ 
 yolov5/
+
+!yolov5n.pt

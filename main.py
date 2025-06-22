@@ -1,6 +1,6 @@
 import warnings
 
-warnings.simplefilter(action='ignore', category=FutureWarning)
+warnings.simplefilter(action="ignore", category=FutureWarning)
 
 import torch
 import cv2
@@ -14,7 +14,7 @@ from queue import Queue
 app = Flask(__name__)
 lock = threading.Lock()
 
-# Cấu hình cameras
+# Configure cameras
 CAMERAS = {
     "bai1": {
         "name": "Bãi 1",
@@ -22,7 +22,7 @@ CAMERAS = {
         "output_frame": None,
         "last_results": None,
         "last_update_time": 0,
-        "frame_queue": Queue(maxsize=10)  # Separate queue for bai1
+        "frame_queue": Queue(maxsize=10),  # Separate queue for bai1
     },
     "bai2": {
         "name": "Bãi 2",
@@ -30,25 +30,34 @@ CAMERAS = {
         "output_frame": None,
         "last_results": None,
         "last_update_time": 0,
-        "frame_queue": Queue(maxsize=10)  # Separate queue for bai2
-    }
+        "frame_queue": Queue(maxsize=10),  # Separate queue for bai2
+    },
 }
 
-# Load YOLOv5 pretrained model (sử dụng YOLOv5n với input size nhỏ hơn)
-model = torch.hub.load('ultralytics/yolov5', 'custom', path='yolov5/runs/train/exp5/weights/best.pt', force_reload=True)
-model.conf = 0.4  # Chỉ nhận >=40% độ tin cậy
+# Load YOLOv5 pretrained model (use YOLOv5n with smaller input size)
+model = torch.hub.load(
+    "ultralytics/yolov5",
+    "custom",
+    path="yolov5n.pt",
+    force_reload=True,
+)
+
+# option to load model online from hub
+# model = torch.hub.load("ultralytics/yolov5", "yolov5n", pretrained=True)
+
+model.conf = 0.4  # Only accept >=40% confidence
 model.imgsz = 416  # Reduce the input size to 416x416
 
-# Nếu có GPU thì chạy trên GPU
+# If GPU is available, run on GPU
 if torch.cuda.is_available():
-    model.to('cuda')
+    model.to("cuda")
 
-# Chỉ lấy các class xe
-vehicle_classes = ['car', 'cars', 'motorbike', 'bus', 'truck', 'person']
+# Only get vehicle classes
+vehicle_classes = ["car", "cars", "motorbike", "bus", "truck", "person"]
 print(model.names)
 
 
-# Hàm tiền xử lý frame
+# Preprocessing function for frames
 def preprocess_frame(frame, target_size=(416, 416)):
     orig_h, orig_w = frame.shape[:2]
     scale = min(target_size[0] / orig_w, target_size[1] / orig_h)
@@ -58,13 +67,13 @@ def preprocess_frame(frame, target_size=(416, 416)):
     canvas = np.zeros((target_size[1], target_size[0], 3), dtype=np.uint8)
     x_offset = (target_size[0] - new_w) // 2
     y_offset = (target_size[1] - new_h) // 2
-    canvas[y_offset:y_offset + new_h, x_offset:x_offset + new_w] = resized_frame
+    canvas[y_offset : y_offset + new_h, x_offset : x_offset + new_w] = resized_frame
 
     return canvas, (x_offset, y_offset, scale, orig_w, orig_h)
 
 
 def capture_frames(camera_id):
-    """Hàm capture frame từ camera và đưa vào queue riêng của camera"""
+    """This function captures frames from the camera and puts them into the camera's private queue"""
     camera_config = CAMERAS[camera_id]
     cap = cv2.VideoCapture(camera_config["url"])
 
@@ -86,16 +95,16 @@ def capture_frames(camera_id):
             time.sleep(1)
             continue
 
-        # Đưa frame vào queue riêng của camera
+        # Put frame into the camera's private queue
         if camera_config["frame_queue"].full():
-            camera_config["frame_queue"].get()  # Loại bỏ frame cũ
+            camera_config["frame_queue"].get()  # Remove old frame
         camera_config["frame_queue"].put((frame, time.time()))
 
     cap.release()
 
 
 def process_frames(camera_id):
-    """Hàm xử lý frame từ queue của camera với YOLOv5"""
+    """This function processes frames from the camera queue with YOLOv5"""
     camera_config = CAMERAS[camera_id]
     frame_count = 0
     skip_frames = 15
@@ -107,7 +116,9 @@ def process_frames(camera_id):
             continue
 
         frame, capture_time = camera_config["frame_queue"].get()
-        processed_frame, (x_offset, y_offset, scale, orig_w, orig_h) = preprocess_frame(frame, target_size=(416, 416))
+        processed_frame, (x_offset, y_offset, scale, orig_w, orig_h) = preprocess_frame(
+            frame, target_size=(416, 416)
+        )
 
         current_time = time.time()
 
@@ -124,8 +135,10 @@ def process_frames(camera_id):
 
         # Draw the bounding boxes from the latest result
         with lock:
-            if (camera_config["last_results"] is not None and
-                    current_time - camera_config["last_update_time"] <= hold_time):
+            if (
+                camera_config["last_results"] is not None
+                and current_time - camera_config["last_update_time"] <= hold_time
+            ):
                 for *xyxy, conf, cls in camera_config["last_results"]:
                     label = model.names[int(cls)]
                     if label in vehicle_classes:
@@ -138,8 +151,15 @@ def process_frames(camera_id):
                         x2 = max(0, min(x2, orig_w - 1))
                         y2 = max(0, min(y2, orig_h - 1))
                         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                        cv2.putText(frame, f'{label} {conf:.2f}', (x1, y1 - 10),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+                        cv2.putText(
+                            frame,
+                            f"{label} {conf:.2f}",
+                            (x1, y1 - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.9,
+                            (0, 255, 0),
+                            2,
+                        )
 
         # Update the output_frame
         with lock:
@@ -158,58 +178,66 @@ def gen_camera_stream(camera_id):
                 continue
             frame = camera_config["output_frame"].copy()
 
-        # Mã hóa frame thành JPEG
-        (flag, encoded_image) = cv2.imencode(".jpg", frame, [int(cv2.IMWRITE_JPEG_QUALITY), 75])
+        # Encode frame to JPEG
+        (flag, encoded_image) = cv2.imencode(
+            ".jpg", frame, [int(cv2.IMWRITE_JPEG_QUALITY), 75]
+        )
         if not flag:
             continue
 
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' +
-               bytearray(encoded_image) +
-               b'\r\n')
+        yield (
+            b"--frame\r\n"
+            b"Content-Type: image/jpeg\r\n\r\n" + bytearray(encoded_image) + b"\r\n"
+        )
 
 
-@app.route('/video_feed/<camera_id>')
+@app.route("/video_feed/<camera_id>")
 def video_feed(camera_id):
-    """Stream video với kết quả phát hiện"""
+    """Stream video with detection results"""
     if camera_id not in CAMERAS:
         return "Camera not found", 404
-    return Response(gen_camera_stream(camera_id),
-                    mimetype="multipart/x-mixed-replace; boundary=frame")
+    return Response(
+        gen_camera_stream(camera_id),
+        mimetype="multipart/x-mixed-replace; boundary=frame",
+    )
 
 
-@app.route('/')
+@app.route("/")
 def index():
-    """Trang chủ hiển thị tất cả các camera"""
-    return render_template('index.html', cameras=CAMERAS)
+    """Home page displays all cameras"""
+    return render_template("index.html", cameras=CAMERAS)
 
 
-@app.route('/api/info')
+@app.route("/api/info")
 def api_info():
-    """API thông tin dạng JSON"""
-    return jsonify({
-        "status": "running",
-        "cameras": list(CAMERAS.keys()),
-        "endpoints": {
-            "video_feeds": {camera_id: f"/video_feed/{camera_id}" for camera_id in CAMERAS},
-            "info": "/api/info"
+    """API information in JSON format"""
+    return jsonify(
+        {
+            "status": "running",
+            "cameras": list(CAMERAS.keys()),
+            "endpoints": {
+                "video_feeds": {
+                    camera_id: f"/video_feed/{camera_id}" for camera_id in CAMERAS
+                },
+                "info": "/api/info",
+            },
         }
-    })
+    )
 
 
-if __name__ == '__main__':
-    # Khởi động thread cho mỗi camera
+if __name__ == "__main__":
+    # Start thread for each camera
     for camera_id in CAMERAS:
         # Thread capture frame
         t_capture = threading.Thread(target=capture_frames, args=(camera_id,))
         t_capture.daemon = True
         t_capture.start()
 
-        # Thread xử lý YOLO
+        # Thread process YOLO
         t_process = threading.Thread(target=process_frames, args=(camera_id,))
         t_process.daemon = True
         t_process.start()
 
     # Restart the Flask server
     print("Starting server at http://0.0.0.0:5001")
-    app.run(host='0.0.0.0', port=5001, threaded=True)
+    app.run(host="0.0.0.0", port=5001, threaded=True)
