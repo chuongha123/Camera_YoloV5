@@ -1,4 +1,7 @@
 import warnings
+import os
+from pathlib import Path
+from ultralytics import YOLO
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -8,6 +11,8 @@ import threading
 from flask import Flask, Response, jsonify, render_template
 import time
 import numpy as np
+import platform
+import pathlib
 
 # Flask app setup
 app = Flask(__name__)
@@ -17,30 +22,35 @@ lock = threading.Lock()
 CAMERAS = {
     "bai1": {
         "name": "Bãi 1",
-        "url": 0,  # 0 = webcam
+        "url": "http://192.168.1.11/stream",  # 0 = webcam
         "output_frame": None,
         "last_results": None,
         "last_update_time": 0
     },
     "bai2": {
         "name": "Bãi 2",
-        "url": 1,  # 0 = webcam
+        "url": 1,  # 1 = second camera (or another index)
         "output_frame": None,
         "last_results": None,
         "last_update_time": 0
     },
 }
 
-# Load YOLOv5 pretrained model (sử dụng YOLOv5n để nhẹ hơn)
-model = torch.hub.load('ultralytics/yolov5', 'yolov5n', pretrained=True)
+if platform.system() == 'Windows':
+    pathlib.PosixPath = pathlib.WindowsPath
+else:
+    pathlib.WindowsPath = pathlib.PosixPath
+
+model = torch.hub.load("ultralytics/yolov5", "custom", path="best_car_train.pt", force_reload=True)
 model.conf = 0.4  # chỉ nhận >=40% độ tin cậy
+model.imgsz = 416
 
 # Nếu có GPU thì chạy trên GPU
 if torch.cuda.is_available():
     model.to('cuda')
 
 # Chỉ lấy các class xe
-vehicle_classes = ['car', 'motorbike', 'bus', 'truck', 'person']
+vehicle_classes = ['car', 'cars', 'motorbike', 'bus', 'truck', 'person']
 
 
 # Hàm tiền xử lý frame để đảm bảo kích thước phù hợp
@@ -84,7 +94,7 @@ def detect_vehicles(camera_id):
 
     frame_count = 0
     skip_frames = 10  # Chỉ chạy YOLO mỗi 5 frame
-    hold_time = 1.0  # Giữ bounding box trong 1 giây
+    hold_time = 2.5  # Giữ bounding box trong 1 giây
 
     while True:
         ret, frame = cap.read()
@@ -200,5 +210,5 @@ if __name__ == '__main__':
         t.start()
 
     # Khởi động Flask server
-    print("Starting server at http://0.0.0.0:5001")
-    app.run(host='0.0.0.0', port=5001, threaded=True)
+    print("Starting server at http://0.0.0.0:8000")
+    app.run(host='0.0.0.0', port=8000, threaded=True)
